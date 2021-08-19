@@ -1,11 +1,17 @@
 package app
 
 import (
-	"urlshortener/models"
+	"database/sql"
+	"urlshortener/pkg/link"
+	"urlshortener/pkg/user"
 )
 
 type App struct {
 	config *Config
+
+	userService *user.UserService
+	linkService *link.LinkService
+	//linkTransitService *linktransition.LinkTransitService
 }
 
 func NewApp(configPath string) (*App, error) {
@@ -17,28 +23,28 @@ func NewApp(configPath string) (*App, error) {
 	}
 	a.config = c
 
-	err = a.initDB()
+	db, err := a.initDB(c.GetPostgres())
 	if err != nil {
 		return &a, err
 	}
 
+	a.userService = user.NewUserService(db)
+	a.linkService = link.NewLinkService(db)
+
 	return &a, nil
 }
 
-func (a *App) initDB() error {
-	err := models.InitDB(a.config.GetPostgres())
-
+func (a *App) initDB(connectionString string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		return err
+		return db, err
 	}
 
-	return nil
+	return db, nil
 }
 
 func (a *App) Run() {
-	us := models.UserStore{}
-
-	users, err := us.Select("SELECT * FROM users")
+	users, err := a.userService.Store.Select("SELECT * FROM users")
 	if err != nil {
 		//logs
 	}
@@ -46,7 +52,7 @@ func (a *App) Run() {
 	user := users[0]
 
 	query := `UPDATE users SET login = $1 WHERE id = $2`
-	err = us.Update(query, "test", user.ID)
+	err = a.userService.Store.Update(query, "test", user.ID)
 	if err != nil {
 		//logs
 	}

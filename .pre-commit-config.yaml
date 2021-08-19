@@ -9,6 +9,10 @@ repos:
   rev: v1.41.1
   hooks:
     - id: golangci-lint
+- repo: https://github.com/APIDevTools/swagger-cli
+  rev: v4.0.4
+  hooks:
+    - id: swagger-validation
 - repo: local
   hooks:
     - id: make-test

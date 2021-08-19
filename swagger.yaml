@@ -1,0 +1,173 @@
+openapi: 3.0.1
+info:
+  title: URL shortener
+  version: 1.0.0
+components:
+  securitySchemes:
+    api_key:
+      type: "apiKey"
+      name: "api_key"
+      in: "header"
+  schemas:
+    Link:
+      type: object
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+          format: date
+        shortLink:
+          type: string
+        longLink:
+          type: string
+        ownerId:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        login:
+          type: string
+    LinkTransition:
+      type: object
+      properties:
+        id:
+          type: string
+        linkId:
+          type: string
+        usedUserId:
+          type: string
+        usedCount:
+          type: integer
+          format: int64
+paths:
+  /link/{userId}/statistic:
+    get:
+      tags: ["link"]
+      operationId: GetStatisticLink
+      parameters:
+        - name: userId
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+        - name: linkId
+          in: query
+          description: The link id 
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                properties:
+                  shortLink:
+                    type: string
+                  longLink:
+                    type: string
+                  uniqueTransit:
+                    type: integer
+                    format: int64
+                  couuntTransit:
+                    type: integer
+                    format: int64
+      security:
+      - api_key: []
+  /link/{userId}:
+    get:
+      tags: ["link"]
+      operationId: GetUserLinks
+      parameters:
+        - name: userId
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Link'
+      security:
+      - api_key: []
+    post:
+      tags: ["link"]
+      operationId: CreateLink
+      parameters:
+      - name: longLink
+        in: query
+        description: The long link 
+        required: true
+        schema:
+          type: string
+      - name: userId
+        in: path
+        description: The user id
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+      security:
+      - api_key: []
+    delete:
+      tags: ["link"]
+      summary: Deletes link
+      operationId: DeleteLink
+      parameters:
+      - name: userId
+        in: path
+        description: The user id
+        required: true
+        schema:
+          type: string
+      - name: linkId
+        in: query
+        description: Link id to delete
+        required: true
+        schema:
+          type: string
+      responses:
+        404:
+          description: Item not found
+          content: {}
+      security:
+      - api_key: []
+  /link/{shortLink}:
+    post:
+      tags: ["link"]
+      summary: Get long link
+      operationId: GetLongLink
+      parameters:
+      - name: shortLink
+        in: path
+        description: The short link
+        required: true
+        schema: 
+          type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+        404:
+          description: Link not found
+          content: {}
