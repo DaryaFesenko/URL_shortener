@@ -2,19 +2,29 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"urlshortener/app"
+	"log"
+	"urlshortener/app/starter"
+	"urlshortener/db/pgsql"
 )
 
 func main() {
-	fmt.Println("starting course project")
-
-	app, err := app.NewApp(getConfigPath())
+	app, err := starter.NewApp(getConfigPath())
 	if err != nil {
-		//logs
+		log.Fatal(err)
 	}
 
-	app.Run()
+	db, err := pgsql.InitDB(app.Config.GetPostgres())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storers := pgsql.InitStorers(db)
+	app.InitServices(storers)
+
+	err = app.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func getConfigPath() string {

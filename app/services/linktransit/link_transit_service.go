@@ -1,17 +1,20 @@
-package linktransition
+package linktransit
 
 import (
-	"database/sql"
 	"net/http"
 )
 
-type LinkTransitService struct {
-	Store *LinkTransitionStore
+type LinkTransitStorer interface {
+	Insert(lt LinkTransition) error
+	Select(query string) ([]LinkTransition, error)
+	Update(query string) error
 }
 
-func NewLinkTransitService(db *sql.DB) *LinkTransitService {
-	store := NewLinkTransitStorer(db)
+type LinkTransitService struct {
+	Store LinkTransitStorer
+}
 
+func NewLinkTransitService(store LinkTransitStorer) *LinkTransitService {
 	return &LinkTransitService{Store: store}
 }
 

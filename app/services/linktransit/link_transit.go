@@ -1,4 +1,4 @@
-package models
+package linktransit
 
 import uuid "github.com/satori/go.uuid"
 

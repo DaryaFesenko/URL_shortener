@@ -1,17 +1,20 @@
 package link
 
 import (
-	"database/sql"
 	"net/http"
 )
 
-type LinkService struct {
-	Store *LinkStore
+type LinkStorer interface {
+	Insert(link Link) error
+	Select(query string) ([]Link, error)
+	Update(query string) error
 }
 
-func NewLinkService(db *sql.DB) *LinkService {
-	store := NewLinkStorer(db)
+type LinkService struct {
+	Store LinkStorer
+}
 
+func NewLinkService(store LinkStorer) *LinkService {
 	return &LinkService{Store: store}
 }
 

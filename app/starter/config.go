@@ -1,6 +1,7 @@
-package app
+package starter
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
@@ -16,12 +17,12 @@ func NewConfig(fileName string) (*Config, error) {
 
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return &conf, err
+		return nil, fmt.Errorf("can't read config file: %v", err)
 	}
 
 	err = yaml.Unmarshal(data, &conf)
 	if err != nil {
-		return &conf, err
+		return nil, fmt.Errorf("can't unmarshal config file: %v", err)
 	}
 
 	return &conf, nil
