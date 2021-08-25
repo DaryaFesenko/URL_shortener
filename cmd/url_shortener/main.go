@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, cancel := context.WithCancel(context.Background())
+	go watchSignal(cancel)
 
 	app, err := starter.NewApp(getConfigPath())
 	if err != nil {
@@ -46,4 +47,14 @@ func getConfigPath() string {
 	flag.Parse()
 
 	return configPath
+}
+
+func watchSignal(cancel context.CancelFunc) {
+	osSignalChan := make(chan os.Signal, 1)
+	signal.Notify(osSignalChan, os.Interrupt)
+
+	<-osSignalChan
+
+	log.Println("user interrupted")
+	cancel()
 }
