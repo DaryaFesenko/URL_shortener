@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"urlshortener/app/services/link"
+	linkService "urlshortener/app/services/link"
+
+	uuid "github.com/satori/go.uuid"
 )
 
-var _ link.LinkStorer = &LinkStore{}
+var _ linkService.LinkStorer = &LinkStore{}
 
 type LinkStore struct {
 	db *sql.DB
@@ -16,7 +19,7 @@ func NewLinkStorer(db *sql.DB) *LinkStore {
 	return &LinkStore{db: db}
 }
 
-func (l *LinkStore) Insert(link link.Link) error {
+func (l *LinkStore) Insert(link *linkService.Link) error {
 	query := `INSERT INTO links (id, created_at, short_link, long_link, owner_id) VALUES ($1, $2, $3, $4, $5)`
 
 	_, err := l.db.Exec(query, link.ID, link.CreatedAt, link.ShortLink, link.LongLink, link.OwnerID)
@@ -25,6 +28,30 @@ func (l *LinkStore) Insert(link link.Link) error {
 	}
 
 	return nil
+}
+
+func (l *LinkStore) Exist(userID *uuid.UUID, longLink string) (bool, error) {
+	links := make([]linkService.Link, 0)
+	query := `SELECT * FROM links WHERE user_id = $1 AND long_link = $2`
+	rows, err := l.db.Query(query, &userID, &longLink)
+	if err != nil {
+		return false, fmt.Errorf("can't select link: %v", err)
+	}
+
+	for rows.Next() {
+		link := linkService.Link{}
+		err := rows.Scan(&link.ID, &link.ShortLink, &link.LongLink)
+		if err != nil {
+			return false, fmt.Errorf("can't scan link: %v", err)
+		}
+		links = append(links, link)
+	}
+
+	if len(links) != 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (l *LinkStore) Select(query string) ([]link.Link, error) {

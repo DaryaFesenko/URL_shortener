@@ -1,13 +1,18 @@
 package link
 
 import (
+	"fmt"
 	"net/http"
+	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 type LinkStorer interface {
-	Insert(link Link) error
+	Insert(link *Link) error
 	Select(query string) ([]Link, error)
 	Update(query string) error
+	Exist(userID *uuid.UUID, longLink string) (bool, error)
 }
 
 type LinkService struct {
@@ -18,16 +23,30 @@ func NewLinkService(store LinkStorer) *LinkService {
 	return &LinkService{Store: store}
 }
 
-func (l *LinkService) CreateLink(w http.ResponseWriter, r *http.Request) {
-	// найти юзера из авторизации
+func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, error) {
+	ok, err := l.Store.Exist(userID, longLink)
+	if err != nil {
+		return "", err
+	}
 
-	// получить длинную ссылку из запроса
+	if ok {
+		return "", fmt.Errorf("this link already exist")
+	}
 
-	//проверить что такой ссылки нет
+	link := &Link{
+		ID:        uuid.NewV4(),
+		OwnerID:   *userID,
+		CreatedAt: time.Now(),
+		LongLink:  longLink,
+		ShortLink: l.createShortLink(longLink),
+	}
 
-	//создать ссылку
+	err = l.Store.Insert(link)
+	if err != nil {
+		return "", err
+	}
 
-	//вернуть короткую ссылку
+	return link.ShortLink, nil
 }
 
 func (l *LinkService) DeleteLink(w http.ResponseWriter, r *http.Request) {
@@ -59,4 +78,8 @@ func (l *LinkService) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 	//получить все ссылки юзера
 
 	//сформировать ответ
+}
+
+func (l *LinkService) createShortLink(longLink string) string {
+	return ""
 }

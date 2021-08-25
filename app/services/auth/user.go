@@ -1,4 +1,4 @@
-package user
+package auth
 
 import uuid "github.com/satori/go.uuid"
 

@@ -1,28 +1,31 @@
 package starter
 
 import (
+	"context"
+	"sync"
+	"urlshortener/api/handler"
+	"urlshortener/app/services/auth"
 	"urlshortener/app/services/link"
 	"urlshortener/app/services/linktransit"
-	"urlshortener/app/services/user"
 )
 
+type HTTPServer interface {
+	Start()
+	Stop()
+}
 type App struct {
 	Config *Config
-
-	userService        *user.UserService
-	linkService        *link.LinkService
-	linkTransitService *linktransit.LinkTransitService
 
 	storers *Storers
 }
 
 type Storers struct {
-	userStorer        user.UserStorer
+	userStorer        auth.UserStorer
 	linkStorer        link.LinkStorer
 	linkTransitStorer linktransit.LinkTransitStorer
 }
 
-func NewStorers(user user.UserStorer, link link.LinkStorer, lt linktransit.LinkTransitStorer) *Storers {
+func NewStorers(user auth.UserStorer, link link.LinkStorer, lt linktransit.LinkTransitStorer) *Storers {
 	return &Storers{
 		userStorer:        user,
 		linkStorer:        link,
@@ -42,27 +45,19 @@ func NewApp(configPath string) (*App, error) {
 	return &a, nil
 }
 
-func (a *App) InitServices(s *Storers) {
+func (a *App) InitServices(s *Storers) *handler.Router {
 	a.storers = s
 
-	a.userService = user.NewUserService(a.storers.userStorer)
-	a.linkService = link.NewLinkService(a.storers.linkStorer)
-	a.linkTransitService = linktransit.NewLinkTransitService(a.storers.linkTransitStorer)
+	authService := auth.NewAuthorizer(a.storers.userStorer, a.Config.HashSalt, a.Config.SigningKey, a.Config.ExpireDuration)
+	//linkService := link.NewLinkService(a.storers.linkStorer)
+	//linkTransitService := linktransit.NewLinkTransitService(a.storers.linkTransitStorer)
+
+	return handler.NewRouter(authService, a.Config.SigningKey)
 }
 
-func (a *App) Run() error {
-	users, err := a.userService.Store.Select("SELECT * FROM users")
-	if err != nil {
-		return err
-	}
-
-	user := users[0]
-
-	query := `UPDATE users SET login = $1 WHERE id = $2`
-	err = a.userService.Store.Update(query, "test", user.ID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (a *App) Serve(ctx context.Context, wg *sync.WaitGroup, hs HTTPServer) {
+	defer wg.Done()
+	hs.Start()
+	<-ctx.Done()
+	hs.Stop()
 }
