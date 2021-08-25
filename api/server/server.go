@@ -1,10 +1,12 @@
 package server
 
 import (
-	"context"
-
 	"net/http"
 	"time"
+)
+
+const (
+	timeout = 30
 )
 
 type Server struct {
@@ -17,19 +19,15 @@ func NewServer(addr string, h http.Handler) *Server {
 	s.srv = http.Server{
 		Addr:              addr,
 		Handler:           h,
-		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		ReadHeaderTimeout: 30 * time.Second,
+		ReadTimeout:       timeout * time.Second,
+		WriteTimeout:      timeout * time.Second,
+		ReadHeaderTimeout: timeout * time.Second,
 	}
 	return s
 }
 
 func (s *Server) Stop() {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	s.srv.Shutdown(ctx)
-	cancel()
 }
 
 func (s *Server) Start() {
-	go s.srv.ListenAndServe()
 }

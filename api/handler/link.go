@@ -27,5 +27,4 @@ func (l *LinkRouter) addLink(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "can't get user by id", http.StatusUnauthorized)
 		return
 	}
-
 }
