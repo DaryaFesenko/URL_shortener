@@ -11,7 +11,7 @@ import (
 type Config struct {
 	Postgres       string        `yaml:"postgres"`
 	HashSalt       string        `yaml:"hashSalt"`
-	SigningKey     []byte        `yaml:"signingKey"`
+	SigningKey     string        `yaml:"signingKey"`
 	ExpireDuration time.Duration `yaml:"expireDuration"`
 }
 

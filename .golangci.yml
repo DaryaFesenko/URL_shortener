@@ -1,4 +1,6 @@
 linters-settings:
+  errcheck:
+    exclude: exclude.txt
   gocyclo:
     min-complexity: 20
   dupl:

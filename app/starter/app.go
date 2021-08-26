@@ -10,7 +10,7 @@ import (
 )
 
 type HTTPServer interface {
-	Start()
+	Start(wg *sync.WaitGroup)
 	Stop()
 }
 type App struct {
@@ -47,17 +47,18 @@ func NewApp(configPath string) (*App, error) {
 
 func (a *App) InitServices(s *Storers) *handler.Router {
 	a.storers = s
+	sign_key := make([]byte, 0)
+	copy(sign_key, []byte(a.Config.SigningKey))
 
-	authService := auth.NewAuthorizer(a.storers.userStorer, a.Config.HashSalt, a.Config.SigningKey, a.Config.ExpireDuration)
-	//linkService := link.NewLinkService(a.storers.linkStorer)
+	authService := auth.NewAuthorizer(a.storers.userStorer, a.Config.HashSalt, sign_key, a.Config.ExpireDuration)
+	linkService := link.NewLinkService(a.storers.linkStorer)
 	//linkTransitService := linktransit.NewLinkTransitService(a.storers.linkTransitStorer)
 
-	return handler.NewRouter(authService, a.Config.SigningKey)
+	return handler.NewRouter(authService, linkService, sign_key)
 }
 
 func (a *App) Serve(ctx context.Context, wg *sync.WaitGroup, hs HTTPServer) {
-	defer wg.Done()
-	hs.Start()
+	hs.Start(wg)
 	<-ctx.Done()
 	hs.Stop()
 }

@@ -1,7 +1,9 @@
 package server
 
 import (
+	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -29,5 +31,12 @@ func NewServer(addr string, h http.Handler) *Server {
 func (s *Server) Stop() {
 }
 
-func (s *Server) Start() {
+func (s *Server) Start(wg *sync.WaitGroup) {
+	go func() {
+		defer wg.Done()
+
+		if err := s.srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe(): %v", err)
+		}
+	}()
 }

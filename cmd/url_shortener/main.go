@@ -28,7 +28,7 @@ func main() {
 
 	storers := pgsql.InitStorers(db)
 	h := app.InitServices(storers)
-	s := server.NewServer(":8000", h)
+	s := server.NewServer(":9000", h)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)

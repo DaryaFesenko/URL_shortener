@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"urlshortener/app/services/auth"
 
+	"github.com/go-chi/chi/v5"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -30,18 +31,15 @@ func NewAuthRouter(r *Router, auth *auth.AuthService) *AuthRouter {
 }
 
 func (a *AuthRouter) RegisterAPI() {
-	a.r.HandleFunc("/signIn", http.HandlerFunc(a.signIn))
-	a.r.HandleFunc("/signUp", http.HandlerFunc(a.signUp))
+	a.r.Route("/auth", func(r chi.Router) {
+		r.Post("/signIn", a.signIn)
+
+		r.Post("/signUp", a.signUp)
+	})
 }
 
 func (a *AuthRouter) signUp(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "bad method", http.StatusMethodNotAllowed)
-		return
-	}
-
 	defer r.Body.Close()
-
 	request := signInRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
@@ -54,12 +52,7 @@ func (a *AuthRouter) signUp(w http.ResponseWriter, r *http.Request) {
 		Password: request.Password,
 	}
 
-	if err := a.auth.SignUp(&newUser); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	token, err := a.auth.SignIn(&newUser)
+	token, err := a.auth.SignUp(&newUser)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -75,13 +68,7 @@ func (a *AuthRouter) signUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *AuthRouter) signIn(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "bad method", http.StatusMethodNotAllowed)
-		return
-	}
-
 	defer r.Body.Close()
-
 	request := signInRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)

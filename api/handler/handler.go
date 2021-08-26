@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"strings"
 	"urlshortener/app/services/auth"
+	"urlshortener/app/services/link"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	uuid "github.com/satori/go.uuid"
 )
 
 type Router struct {
-	*http.ServeMux
+	*chi.Mux
 }
 
 var (
@@ -22,18 +25,22 @@ const (
 	JWT        = "Bearer"
 )
 
-func NewRouter(auth *auth.AuthService, signingKey []byte) *Router {
+func NewRouter(auth *auth.AuthService, link *link.LinkService, signingKey []byte) *Router {
 	SIGNING_KEY = signingKey
 	r := &Router{
-		ServeMux: http.NewServeMux(),
+		chi.NewRouter(),
 	}
 
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
 	NewAuthRouter(r, auth).RegisterAPI()
+	NewLinkRouter(r, link).RegisterAPI()
 
 	return r
 }
 
-func (*Router) AuthMiddleware(next http.Handler) http.Handler {
+func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -63,7 +70,7 @@ func (*Router) AuthMiddleware(next http.Handler) http.Handler {
 	)
 }
 
-func (*Router) GetUserAuth(w http.ResponseWriter, r *http.Request) (*uuid.UUID, error) {
+func (*Router) GetUserAuth(r *http.Request) (*uuid.UUID, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return nil, fmt.Errorf("can't header authorization")

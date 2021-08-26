@@ -32,7 +32,7 @@ func (l *LinkStore) Insert(link *linkService.Link) error {
 
 func (l *LinkStore) Exist(userID *uuid.UUID, longLink string) (bool, error) {
 	links := make([]linkService.Link, 0)
-	query := `SELECT * FROM links WHERE user_id = $1 AND long_link = $2`
+	query := `SELECT * FROM links WHERE owner_id = $1 AND long_link = $2`
 	rows, err := l.db.Query(query, &userID, &longLink)
 	if err != nil {
 		return false, fmt.Errorf("can't select link: %v", err)
@@ -40,7 +40,7 @@ func (l *LinkStore) Exist(userID *uuid.UUID, longLink string) (bool, error) {
 
 	for rows.Next() {
 		link := linkService.Link{}
-		err := rows.Scan(&link.ID, &link.ShortLink, &link.LongLink)
+		err := rows.Scan(&link.ID, &link.CreatedAt, &link.ShortLink, &link.LongLink, &link.OwnerID)
 		if err != nil {
 			return false, fmt.Errorf("can't scan link: %v", err)
 		}

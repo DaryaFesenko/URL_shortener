@@ -33,9 +33,9 @@ func NewAuthorizer(store UserStorer, hashSalt string, signingKey []byte, expireD
 	}
 }
 
-func (a *AuthService) SignUp(user *User) error {
+func (a *AuthService) SignUp(user *User) (string, error) {
 	if user.Password == "" || len(user.Password) < 4 {
-		return fmt.Errorf("bad password")
+		return "", fmt.Errorf("bad password")
 	}
 
 	pwd := sha1.New()
@@ -43,7 +43,14 @@ func (a *AuthService) SignUp(user *User) error {
 	pwd.Write([]byte(a.hashSalt))
 	user.Password = fmt.Sprintf("%x", pwd.Sum(nil))
 
-	return a.userStore.Insert(user)
+	err := a.userStore.Insert(user)
+	if err != nil {
+		return "", err
+	}
+
+	token := a.createToken(user.ID)
+
+	return token.SignedString(a.signingKey)
 }
 
 func (a *AuthService) SignIn(user *User) (string, error) {
@@ -57,13 +64,19 @@ func (a *AuthService) SignIn(user *User) (string, error) {
 		return "", err
 	}
 
+	token := a.createToken(user.ID)
+
+	return token.SignedString(a.signingKey)
+}
+
+func (a *AuthService) createToken(userID uuid.UUID) *jwt.Token {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: jwt.At(time.Now().Add(a.expireDuration)),
 			IssuedAt:  jwt.At(time.Now()),
 		},
-		UserID: user.ID,
+		UserID: userID,
 	})
 
-	return token.SignedString(a.signingKey)
+	return token
 }
