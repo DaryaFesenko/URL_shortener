@@ -37,7 +37,6 @@ linters:
     - prealloc
     - whitespace
     - exportloopref
-    - gomnd
 
 run:
   concurrency: 2

@@ -51,7 +51,7 @@ func (a *App) InitServices(s *Storers) *handler.Router {
 	copy(sign_key, []byte(a.Config.SigningKey))
 
 	authService := auth.NewAuthorizer(a.storers.userStorer, a.Config.HashSalt, sign_key, a.Config.ExpireDuration)
-	linkService := link.NewLinkService(a.storers.linkStorer)
+	linkService := link.NewLinkService(a.storers.linkStorer, a.Config.ServerAddress)
 	//linkTransitService := linktransit.NewLinkTransitService(a.storers.linkTransitStorer)
 
 	return handler.NewRouter(authService, linkService, sign_key)

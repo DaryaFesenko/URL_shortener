@@ -38,7 +38,7 @@ func (l *LinkRouter) RegisterAPI() {
 func (l *LinkRouter) addLink(w http.ResponseWriter, r *http.Request) {
 	userID, err := l.r.GetUserAuth(r)
 	if err != nil {
-		http.Error(w, "can't get user by id", http.StatusUnauthorized)
+		http.Error(w, "can't get user from authorization", http.StatusUnauthorized)
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"urlshortener/app/services/shortener"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -16,11 +17,12 @@ type LinkStorer interface {
 }
 
 type LinkService struct {
-	Store LinkStorer
+	Store         LinkStorer
+	serverAddress string
 }
 
-func NewLinkService(store LinkStorer) *LinkService {
-	return &LinkService{Store: store}
+func NewLinkService(store LinkStorer, serverAddress string) *LinkService {
+	return &LinkService{Store: store, serverAddress: serverAddress}
 }
 
 func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, error) {
@@ -38,7 +40,7 @@ func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, er
 		OwnerID:   *userID,
 		CreatedAt: time.Now(),
 		LongLink:  longLink,
-		ShortLink: l.createShortLink(longLink),
+		ShortLink: l.createShortLink(),
 	}
 
 	err = l.Store.Insert(link)
@@ -80,6 +82,6 @@ func (l *LinkService) GetUserLinks(w http.ResponseWriter, r *http.Request) {
 	//сформировать ответ
 }
 
-func (l *LinkService) createShortLink(longLink string) string {
-	return ""
+func (l *LinkService) createShortLink() string {
+	return l.serverAddress + "/" + shortener.Shorten()
 }

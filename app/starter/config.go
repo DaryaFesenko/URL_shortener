@@ -13,6 +13,7 @@ type Config struct {
 	HashSalt       string        `yaml:"hashSalt"`
 	SigningKey     string        `yaml:"signingKey"`
 	ExpireDuration time.Duration `yaml:"expireDuration"`
+	ServerAddress  string        `yaml:"serverAddress"`
 }
 
 func NewConfig(fileName string) (*Config, error) {
