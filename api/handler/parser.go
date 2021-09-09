@@ -6,7 +6,7 @@ import (
 	"urlshortener/app/services/auth"
 
 	"github.com/dgrijalva/jwt-go/v4"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 func ParseToken(accessToken string, signingKey []byte) (*uuid.UUID, error) {

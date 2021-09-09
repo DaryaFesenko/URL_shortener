@@ -6,7 +6,7 @@ import (
 	"urlshortener/app/services/auth"
 
 	"github.com/go-chi/chi/v5"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 type signInRequest struct {
@@ -47,7 +47,7 @@ func (a *AuthRouter) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newUser := auth.User{
-		ID:       uuid.NewV4(),
+		ID:       uuid.New(),
 		Login:    request.Login,
 		Password: request.Password,
 	}

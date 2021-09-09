@@ -1,32 +1,31 @@
 package link
 
 import (
+	"database/sql"
 	"fmt"
-	"net/http"
 	"time"
 	"urlshortener/app/services/shortener"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
-type LinkStorer interface {
-	Insert(link *Link) error
-	Select(query string) ([]Link, error)
-	Update(query string) error
-	Exist(userID *uuid.UUID, longLink string) (bool, error)
+type LinkStatistic struct {
+	UniqueTransitCount int
+	TransitCount       int
 }
 
 type LinkService struct {
-	Store         LinkStorer
-	serverAddress string
+	store               LinkStorer
+	serverAddress       string
+	linkTransitionStore LinkTransitStorer
 }
 
-func NewLinkService(store LinkStorer, serverAddress string) *LinkService {
-	return &LinkService{Store: store, serverAddress: serverAddress}
+func NewLinkService(store LinkStorer, linkTransitStore LinkTransitStorer, serverAddress string) *LinkService {
+	return &LinkService{store: store, serverAddress: serverAddress, linkTransitionStore: linkTransitStore}
 }
 
 func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, error) {
-	ok, err := l.Store.Exist(userID, longLink)
+	ok, err := l.store.ExistLongLink(userID, longLink)
 	if err != nil {
 		return "", err
 	}
@@ -36,14 +35,14 @@ func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, er
 	}
 
 	link := &Link{
-		ID:        uuid.NewV4(),
+		ID:        uuid.New(),
 		OwnerID:   *userID,
 		CreatedAt: time.Now(),
 		LongLink:  longLink,
 		ShortLink: l.createShortLink(),
 	}
 
-	err = l.Store.Insert(link)
+	err = l.store.Insert(link)
 	if err != nil {
 		return "", err
 	}
@@ -51,37 +50,105 @@ func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, er
 	return link.ShortLink, nil
 }
 
-func (l *LinkService) DeleteLink(w http.ResponseWriter, r *http.Request) {
-	// найти юзера из авторизации
+func (l *LinkService) DeleteLink(userID, linkID uuid.UUID) error {
+	link, err := l.store.GetLink(linkID)
+	if err != nil {
+		return err
+	}
 
-	// получить id ссылки из запроса
+	if link.OwnerID != userID {
+		return fmt.Errorf("link %s does not belong user %s", linkID, userID)
+	}
 
-	//проверить что ссылка принадлежит юзеру
+	err = l.linkTransitionStore.DeleteLinkTransit(linkID)
+	if err != nil {
+		return err
+	}
 
-	//удалить переходы по ссылке
+	err = l.store.DeleteLink(linkID)
+	if err != nil {
+		return err
+	}
 
-	//удалить ссылку
+	return nil
 }
 
-func (l *LinkService) GetLongLink(w http.ResponseWriter, r *http.Request) {
-	//получить какой нибудь уникальный идентификатор типа адреса
+func (l *LinkService) GetLinkStatistic(userID *uuid.UUID, linkID uuid.UUID) (LinkStatistic, error) {
+	link, err := l.store.GetLink(linkID)
+	if err != nil {
+		return LinkStatistic{}, err
+	}
 
-	//получить короткую ссылку из запроса
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return LinkStatistic{}, fmt.Errorf("can't found link with id: %s", linkID)
+		}
 
-	//создать запись о переходе если ее нет
-	//если есть, плюсануть переход
+		return LinkStatistic{}, err
+	}
 
-	// вернуть длинную ссылку
-}
+	if link.OwnerID != *userID {
+		return LinkStatistic{}, fmt.Errorf("link %s does not belong user %s", linkID, userID)
+	}
 
-func (l *LinkService) GetUserLinks(w http.ResponseWriter, r *http.Request) {
-	// получить юзера
+	linkTransitions, err := l.linkTransitionStore.StatisticLink(linkID)
+	if err != nil {
+		return LinkStatistic{}, err
+	}
 
-	//получить все ссылки юзера
+	var count int
 
-	//сформировать ответ
+	for i := range linkTransitions {
+		count = count + linkTransitions[i].UsedCount
+	}
+
+	return LinkStatistic{
+		UniqueTransitCount: len(linkTransitions),
+		TransitCount:       count,
+	}, nil
 }
 
 func (l *LinkService) createShortLink() string {
 	return l.serverAddress + "/" + shortener.Shorten()
+}
+
+func (l *LinkService) GetLongLink(shortLink string, userID string) (string, error) {
+	longLink, err := l.store.GetLongLink(shortLink)
+
+	if err != nil {
+		return "", err
+	}
+
+	linkID, err := l.store.GetLinkIDByShortLink(shortLink)
+	if err != nil {
+		return "", err
+	}
+
+	linkTransit, err := l.linkTransitionStore.GetTransit(userID, *linkID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			errInsert := l.linkTransitionStore.Insert(LinkTransition{
+				ID:         uuid.New(),
+				LinkID:     *linkID,
+				UsedUserID: userID,
+				UsedCount:  1,
+			})
+
+			if errInsert != nil {
+				return "", errInsert
+			}
+
+			return longLink, nil
+		}
+
+		return "", err
+	}
+
+	linkTransit.UsedCount++
+	err = l.linkTransitionStore.UpdateTransitCount(linkTransit.ID, linkTransit.UsedCount)
+	if err != nil {
+		return "", err
+	}
+
+	return longLink, nil
 }

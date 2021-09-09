@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 type UserStorer interface {

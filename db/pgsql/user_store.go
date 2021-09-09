@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"urlshortener/app/services/auth"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 )
 
 var _ auth.UserStorer = &UserStore{}
@@ -20,7 +20,7 @@ func NewUserStore(db *sql.DB) *UserStore {
 
 func (u *UserStore) Get(userID uuid.UUID, password string) (*auth.User, error) {
 	users := make([]auth.User, 0)
-	query := `SELECT * FROM users WHERE id = $1 AND password = $2`
+	query := `SELECT id, login, password FROM users WHERE id = $1 AND password = $2`
 	rows, err := u.db.Query(query, userID, password)
 	if err != nil {
 		return nil, fmt.Errorf("can't select user: %v", err)

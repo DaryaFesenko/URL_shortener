@@ -6,7 +6,6 @@ import (
 	"urlshortener/api/handler"
 	"urlshortener/app/services/auth"
 	"urlshortener/app/services/link"
-	"urlshortener/app/services/linktransit"
 )
 
 type HTTPServer interface {
@@ -22,10 +21,10 @@ type App struct {
 type Storers struct {
 	userStorer        auth.UserStorer
 	linkStorer        link.LinkStorer
-	linkTransitStorer linktransit.LinkTransitStorer
+	linkTransitStorer link.LinkTransitStorer
 }
 
-func NewStorers(user auth.UserStorer, link link.LinkStorer, lt linktransit.LinkTransitStorer) *Storers {
+func NewStorers(user auth.UserStorer, link link.LinkStorer, lt link.LinkTransitStorer) *Storers {
 	return &Storers{
 		userStorer:        user,
 		linkStorer:        link,
@@ -51,8 +50,7 @@ func (a *App) InitServices(s *Storers) *handler.Router {
 	copy(sign_key, []byte(a.Config.SigningKey))
 
 	authService := auth.NewAuthorizer(a.storers.userStorer, a.Config.HashSalt, sign_key, a.Config.ExpireDuration)
-	linkService := link.NewLinkService(a.storers.linkStorer, a.Config.ServerAddress)
-	//linkTransitService := linktransit.NewLinkTransitService(a.storers.linkTransitStorer)
+	linkService := link.NewLinkService(a.storers.linkStorer, a.storers.linkTransitStorer, a.Config.ServerAddress)
 
 	return handler.NewRouter(authService, linkService, sign_key)
 }
