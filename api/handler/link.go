@@ -39,11 +39,11 @@ func (l *LinkRouter) RegisterAPI() {
 		r.Use(AuthMiddleware)
 
 		r.Post("/", l.addLink)
-		r.Delete("/{linkId}", l.delLink)
-		r.Get("/{id}", l.infoLink)
+		r.Delete("/", l.delLink)
+		r.Get("/", l.infoLink)
 	})
 
-	l.r.Get("/{shortLink}", l.getLongLink)
+	l.r.Get("/", l.getLongLink)
 }
 
 func (l *LinkRouter) addLink(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +79,7 @@ func (l *LinkRouter) delLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	linkID := r.URL.Query().Get("linkId")
+	linkID := r.URL.Query().Get("linkID")
 	if linkID == "" {
 		http.Error(w, "parameters 'linkId' is empty", http.StatusBadRequest)
 		return

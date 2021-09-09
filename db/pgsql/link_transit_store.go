@@ -39,7 +39,7 @@ func (l *LinkTransitionStore) UpdateTransitCount(id uuid.UUID, usedCount int) er
 }
 
 func (l *LinkTransitionStore) StatisticLink(linkID uuid.UUID) ([]link.LinkTransition, error) {
-	linkTransitions, err := l.getTransitions(`SELECT used_user_id, used_count FROM link_transitions WHERE link_id = $1`, linkID)
+	linkTransitions, err := l.getTransitions(`SELECT id, link_id, used_user_id, used_count FROM link_transitions WHERE link_id = $1`, linkID)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +54,10 @@ func (l *LinkTransitionStore) GetTransit(usedUserID string, linkID uuid.UUID) (l
 
 	if err != nil {
 		return link.LinkTransition{}, err
+	}
+
+	if len(linkTransitions) == 0 {
+		return link.LinkTransition{}, sql.ErrNoRows
 	}
 
 	return linkTransitions[0], nil

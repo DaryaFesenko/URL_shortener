@@ -92,12 +92,12 @@ func (l *LinkStore) GetLink(linkID uuid.UUID) (*link.Link, error) {
 }
 
 func (l *LinkStore) GetLongLink(shortLink string) (string, error) {
-	links, err := l.getLinks(`SELECT long_link FROM links WHERE short_link = $1`, shortLink)
+	links, err := l.getLinks(`SELECT id, created_at, short_link, long_link, owner_id FROM links WHERE short_link = $1`, shortLink)
 	if err != nil {
 		return "", err
 	}
 
-	if len(links) != 0 {
+	if len(links) == 0 {
 		return "", fmt.Errorf("can't long link with short link %s", shortLink)
 	}
 
@@ -105,7 +105,7 @@ func (l *LinkStore) GetLongLink(shortLink string) (string, error) {
 }
 
 func (l *LinkStore) GetLinkIDByShortLink(shortLink string) (*uuid.UUID, error) {
-	links, err := l.getLinks(`SELECT id FROM links WHERE short_link = $1`, shortLink)
+	links, err := l.getLinks(`SELECT id, created_at, short_link, long_link, owner_id FROM links WHERE short_link = $1`, shortLink)
 	if err != nil {
 		return nil, err
 	}
