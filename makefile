@@ -1,4 +1,4 @@
-APP = urlshortener
+APP = url_shortener
 
 HAS_LINT := $(shell command -v golangci-lint;)
 HAS_IMPORTS := $(shell command -v goimports;)
@@ -14,12 +14,12 @@ lint: bootstrap
 .PHONY: run
 run: clean build
 	@echo "+ $@"
-	./${APP}
+	./${APP} -c "./cmd/url_shortener/config.yaml"
 
 .PHONY: build
 build: lint
 	@echo "+ $@"
-	@go build
+	@go build ./cmd/url_shortener/
 
 .PHONY: clean
 clean:

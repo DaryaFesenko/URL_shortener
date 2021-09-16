@@ -11,8 +11,6 @@ import (
 
 type UserStorer interface {
 	Insert(user *User) error
-	Select(query string, params ...interface{}) ([]User, error)
-	Update(query string, params ...interface{}) error
 	Get(userID uuid.UUID, password string) (*User, error)
 }
 

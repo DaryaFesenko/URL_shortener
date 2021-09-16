@@ -7,13 +7,14 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 	"urlshortener/api/server"
 	"urlshortener/app/starter"
 	"urlshortener/db/pgsql"
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	go watchSignal(cancel)
 
 	app, err := starter.NewApp(getConfigPath())
