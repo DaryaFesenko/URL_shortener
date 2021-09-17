@@ -1,6 +1,6 @@
-package models
+package auth
 
-import uuid "github.com/satori/go.uuid"
+import "github.com/google/uuid"
 
 type User struct {
 	ID       uuid.UUID `json:"id"`
