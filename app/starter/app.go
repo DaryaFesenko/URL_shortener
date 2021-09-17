@@ -2,10 +2,21 @@ package starter
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
+	"time"
 	"urlshortener/api/handler"
 	"urlshortener/app/services/auth"
 	"urlshortener/app/services/link"
+)
+
+const (
+	timeout = 60
 )
 
 type HTTPServer interface {
@@ -32,10 +43,10 @@ func NewStorers(user auth.UserStorer, link link.LinkStorer, lt link.LinkTransitS
 	}
 }
 
-func NewApp(configPath string) (*App, error) {
+func NewApp() (*App, error) {
 	a := App{}
 
-	c, err := NewConfig(configPath)
+	c, err := NewConfig()
 	if err != nil {
 		return &a, err
 	}
@@ -55,8 +66,52 @@ func (a *App) InitServices(s *Storers) *handler.Router {
 	return handler.NewRouter(authService, linkService, sign_key)
 }
 
-func (a *App) Serve(ctx context.Context, wg *sync.WaitGroup, hs HTTPServer) {
-	hs.Start(wg)
-	<-ctx.Done()
-	hs.Stop()
+func (a *App) Serve(addr string, h http.Handler) {
+	srv := http.Server{
+		Addr:              addr,
+		Handler:           h,
+		ReadTimeout:       timeout * time.Second,
+		WriteTimeout:      timeout * time.Second,
+		ReadHeaderTimeout: timeout * time.Second,
+	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		fmt.Println("start listen")
+
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			if err == http.ErrServerClosed {
+				log.Println(err.Error())
+			} else {
+				log.Println(err)
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		signalListener := make(chan os.Signal, 4)
+		signal.Notify(signalListener,
+			syscall.SIGHUP,
+			syscall.SIGINT,
+			syscall.SIGTERM,
+			syscall.SIGQUIT)
+
+		stop := <-signalListener
+		log.Println("Received ", stop)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	wg.Wait()
 }

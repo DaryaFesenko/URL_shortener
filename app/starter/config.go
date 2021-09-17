@@ -1,11 +1,8 @@
 package starter
 
 import (
-	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
-
-	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -16,23 +13,14 @@ type Config struct {
 	ServerAddress  string        `yaml:"serverAddress"`
 }
 
-func NewConfig(fileName string) (*Config, error) {
-	var data []byte
+func NewConfig() (*Config, error) {
 	var conf Config
 
-	data, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("can't read config file: %v", err)
-	}
-
-	err = yaml.Unmarshal(data, &conf)
-	if err != nil {
-		return nil, fmt.Errorf("can't unmarshal config file: %v", err)
-	}
+	conf.Postgres = os.Getenv("PG_DSN")
+	conf.ServerAddress = ":9000"
+	conf.HashSalt = "hashSalt"
+	conf.SigningKey = "signingKey"
+	conf.ExpireDuration = time.Hour * 24 * 7
 
 	return &conf, nil
-}
-
-func (c *Config) GetPostgres() string {
-	return c.Postgres
 }
