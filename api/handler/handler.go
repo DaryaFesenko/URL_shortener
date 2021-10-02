@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"strings"
 	"urlshortener/app/services/auth"
 	"urlshortener/app/services/link"
@@ -36,7 +37,6 @@ func NewRouter(auth *auth.AuthService, link *link.LinkService, signingKey []byte
 	r.Use(middleware.Recoverer)
 
 	r.Get("/", r.handleMain)
-	r.Get("/stat", r.handleStat)
 
 	NewAuthRouter(r, auth).RegisterAPI()
 	NewLinkRouter(r, link, serverAddress).RegisterAPI()
@@ -45,20 +45,13 @@ func NewRouter(auth *auth.AuthService, link *link.LinkService, signingKey []byte
 }
 
 func (o *Router) handleMain(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("../../front/index.html")
+	pwd, err := os.Getwd()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "can't get path to current directory", http.StatusInternalServerError)
 		return
 	}
 
-	err = tmpl.Execute(w, "")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (o *Router) handleStat(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("../../front/statistic.html")
+	tmpl, err := template.ParseFiles(pwd + "/front/index.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

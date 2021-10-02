@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"os"
 	"urlshortener/app/services/link"
 
 	"github.com/go-chi/chi/v5"
@@ -141,7 +142,13 @@ func (l *LinkRouter) infoLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("../../front/statistic.html")
+	pwd, err := os.Getwd()
+	if err != nil {
+		http.Error(w, "can't get path to current directory", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, err := template.ParseFiles(pwd + "/front/statistic.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
