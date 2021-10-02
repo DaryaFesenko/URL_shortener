@@ -14,7 +14,7 @@ lint: bootstrap
 .PHONY: run
 run: clean build
 	@echo "+ $@"
-	./${APP} -c "./cmd/url_shortener/config.yaml"
+	./${APP}
 
 .PHONY: build
 build: lint

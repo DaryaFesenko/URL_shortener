@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
 	"urlshortener/app/services/auth"
@@ -25,7 +26,7 @@ const (
 	JWT        = "Bearer"
 )
 
-func NewRouter(auth *auth.AuthService, link *link.LinkService, signingKey []byte) *Router {
+func NewRouter(auth *auth.AuthService, link *link.LinkService, signingKey []byte, serverAddress string) *Router {
 	SIGNING_KEY = signingKey
 	r := &Router{
 		chi.NewRouter(),
@@ -34,10 +35,39 @@ func NewRouter(auth *auth.AuthService, link *link.LinkService, signingKey []byte
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	r.Get("/", r.handleMain)
+	r.Get("/stat", r.handleStat)
+
 	NewAuthRouter(r, auth).RegisterAPI()
-	NewLinkRouter(r, link).RegisterAPI()
+	NewLinkRouter(r, link, serverAddress).RegisterAPI()
 
 	return r
+}
+
+func (o *Router) handleMain(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("../../front/index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, "")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (o *Router) handleStat(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("../../front/statistic.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, "")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -86,6 +116,23 @@ func (*Router) GetUserAuth(r *http.Request) (*uuid.UUID, error) {
 	}
 
 	userID, err := ParseToken(headerParts[1], SIGNING_KEY)
+	if err != nil {
+		return nil, fmt.Errorf("bad header")
+	}
+
+	return userID, nil
+}
+
+func (*Router) GetUserAuthFromCookie(r *http.Request) (*uuid.UUID, error) {
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			return nil, fmt.Errorf("can't header authorization")
+		}
+		return nil, fmt.Errorf("can't header authorization")
+	}
+
+	userID, err := ParseToken(cookie.Value, SIGNING_KEY)
 	if err != nil {
 		return nil, fmt.Errorf("bad header")
 	}

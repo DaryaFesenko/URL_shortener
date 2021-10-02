@@ -3,6 +3,7 @@ package link
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 	"urlshortener/app/services/shortener"
 
@@ -10,28 +11,28 @@ import (
 )
 
 type LinkStatistic struct {
-	UniqueTransitCount int
-	TransitCount       int
+	UniqueTransitCount int    `json:"uniqueCount"`
+	TransitCount       int    `json:"allCount"`
+	LongLink           string `json:"longLink"`
+	ShortLink          string `json:"shortLink"`
 }
 
 type LinkService struct {
 	store               LinkStorer
-	serverAddress       string
 	linkTransitionStore LinkTransitStorer
 }
 
-func NewLinkService(store LinkStorer, linkTransitStore LinkTransitStorer, serverAddress string) *LinkService {
-	return &LinkService{store: store, serverAddress: serverAddress, linkTransitionStore: linkTransitStore}
+func NewLinkService(store LinkStorer, linkTransitStore LinkTransitStorer) *LinkService {
+	return &LinkService{store: store, linkTransitionStore: linkTransitStore}
+}
+
+func (l *LinkService) GetLinks(userID uuid.UUID) ([]Link, error) {
+	return l.store.GetLinks(userID)
 }
 
 func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, error) {
-	ok, err := l.store.ExistLongLink(userID, longLink)
-	if err != nil {
-		return "", err
-	}
-
-	if ok {
-		return "", fmt.Errorf("this link already exist")
+	if !strings.Contains(longLink, "http") {
+		return "", fmt.Errorf("string is not link")
 	}
 
 	link := &Link{
@@ -39,10 +40,10 @@ func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, er
 		OwnerID:   *userID,
 		CreatedAt: time.Now(),
 		LongLink:  longLink,
-		ShortLink: l.createShortLink(),
+		ShortLink: shortener.Shorten(),
 	}
 
-	err = l.store.Insert(link)
+	err := l.store.Insert(link)
 	if err != nil {
 		return "", err
 	}
@@ -105,14 +106,12 @@ func (l *LinkService) GetLinkStatistic(userID *uuid.UUID, linkID uuid.UUID) (Lin
 	return LinkStatistic{
 		UniqueTransitCount: len(linkTransitions),
 		TransitCount:       count,
+		LongLink:           link.LongLink,
+		ShortLink:          link.ShortLink,
 	}, nil
 }
 
-func (l *LinkService) createShortLink() string {
-	return l.serverAddress + "/" + shortener.Shorten()
-}
-
-func (l *LinkService) GetLongLink(shortLink string, userID string) (string, error) {
+func (l *LinkService) GetLongLink(shortLink string, ip string) (string, error) {
 	longLink, err := l.store.GetLongLink(shortLink)
 
 	if err != nil {
@@ -124,14 +123,15 @@ func (l *LinkService) GetLongLink(shortLink string, userID string) (string, erro
 		return "", err
 	}
 
-	linkTransit, err := l.linkTransitionStore.GetTransit(userID, *linkID)
+	linkTransit, err := l.linkTransitionStore.GetTransit(ip, *linkID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			errInsert := l.linkTransitionStore.Insert(LinkTransition{
-				ID:         uuid.New(),
-				LinkID:     *linkID,
-				UsedUserID: userID,
-				UsedCount:  1,
+				ID:        uuid.New(),
+				LinkID:    *linkID,
+				IP:        ip,
+				UsedCount: 1,
+				Date:      time.Now(),
 			})
 
 			if errInsert != nil {

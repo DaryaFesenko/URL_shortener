@@ -1,0 +1,251 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Сокращатель ссылок</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+ </head>
+ <body>
+    <div id ="error" hidden="true" class="d-grid gap-2 col-6 mx-auto" style="background-color: #f7cbcb; color: red; text-align: center; border-radius: 8px"></div>
+
+    <div style="text-align: right; margin: 20px;" id="logout" hidden="true"> 
+        <button type="button" class="btn btn-dark" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="d-grid gap-2 col-3 mx-auto" style="margin-top: 20px; margin-bottom: 40px;">
+        <b style="font-size: 40px;">Link shortening service</b>
+    </div>
+   
+    <div id="sign" hidden="true">
+        <div class="d-grid gap-2 col-2 mx-auto" style="margin-top: 30px;">
+            <input id= "login" placeholder="login"/> 
+            <input id= "password" placeholder="password" type="password"/> 
+        
+            <div id="choiceSign" class="md-block">
+                <button type="button" class="btn btn-dark" onclick="auth()" style="width: 158px;">Registration</button>
+                <button type="button" class="btn btn-dark" onclick="signIn()" style="width: 157px;">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="info" hidden="true">
+        <div class="d-grid gap-2 col-4 mx-auto">
+            <div class="input-group mb-3" id="addLink">
+                <input class="form-control" id="longLink" placeholder="long link"/>
+                <button type="button" class="btn btn-dark" onclick="addLink()">Add Link</button> 
+            </div>
+        </div>
+
+        <div id ="shortLink" class="d-grid gap-2 col-4 mx-auto"></div>
+
+        <div class="d-grid gap-2 col-10 mx-auto">
+            <h1 style="margin-top: 30px;"><b>My links</b></h1>
+            <table id = "myLinks" class="table table-striped">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>#</td>
+                        <td>Short Link</td>
+                        <td>Long Link</td>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+ </body>
+ <script>
+    authToken = getCookie("token")
+
+    if (authToken != undefined){
+        document.getElementById('info').hidden = false;
+        document.getElementById('logout').hidden = false;
+        loadMyLinks()
+    }else{
+        document.getElementById('sign').hidden = false;
+    }
+
+    function delLink(idLink){
+        document.getElementById('error').hidden = 'true'
+
+        var req = new XMLHttpRequest();
+        req.open('DELETE', '/link?linkID='+idLink, false); 
+        req.setRequestHeader("Content-Type", "application/json");
+        req.setRequestHeader("Authorization", "Bearer " + authToken);
+        req.withCredentials = false; 
+        req.onreadystatechange = function(){
+           loadMyLinks()
+        }
+
+        req.send()
+    }
+
+    function error(msg){
+        err = document.getElementById('error')
+        err.hidden = false
+        err.innerHTML = "<p>ERROR: "+msg+"</p>"
+    }
+
+    function logout(){
+        document.getElementById('error').hidden = 'true'
+
+        var cookies = document.cookie.split(";");
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i];
+            var eqPos = cookie.indexOf("=");
+            var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        }
+
+        window.location.reload()
+    }
+
+    function loadMyLinks(){
+        var req = new XMLHttpRequest();
+        req.open('GET', '/link/myLinks', false); 
+        req.setRequestHeader("Content-Type", "application/json");
+        req.setRequestHeader("Authorization", "Bearer " + authToken);
+        req.withCredentials = false; 
+        req.onreadystatechange = function(){
+            if(req.readyState == XMLHttpRequest.DONE && req.status == 200) {
+                t = JSON.parse(req.response)
+
+                myLinks = document.getElementById('myLinks')
+                body = myLinks.getElementsByTagName('tbody')[0]
+                body.remove()
+
+                newBody = document.createElement('tbody')
+
+                for (var i = 0; i < t.length; i++){
+                    let tr = document.createElement('tr');
+
+                    n = document.createElement('td')
+                    n.innerHTML = i+1
+
+                    s = document.createElement('td')
+                    s.innerHTML = "localhost:9000/shortlink/"+t[i].shortLink
+
+                    l = document.createElement('td')
+                    l.innerHTML = t[i].longLink
+
+                    buttonDel = document.createElement('td')
+                    buttonDel.innerHTML = '<button type="button" class="btn btn-outline-danger" onclick="delLink(\''+t[i].id+'\')">Delete</button>'
+
+                    buttonStat = document.createElement('td')
+                    buttonStat.innerHTML = '<a type="button" class="btn btn-outline-info" target="_blank" href="/link?id='+t[i].id+'"">Statistic</button>'
+
+                    tr.append(buttonStat, buttonDel, n, s, l)
+                    newBody.append(tr)
+                }
+
+                myLinks.append(newBody)
+            }else{
+                error(req.response)
+            }
+        }
+
+        longlink =  document.getElementById('longLink').value;
+        data = JSON.stringify({ "longLink": longlink });
+
+        req.send(data)
+    }
+
+    function addLink(){
+        document.getElementById('error').hidden = 'true'
+
+        var req = new XMLHttpRequest();
+        req.open('POST', '/link', false); 
+        req.setRequestHeader("Content-Type", "application/json");
+        req.setRequestHeader("Authorization", "Bearer " + authToken);
+        req.withCredentials = false; 
+        req.onreadystatechange = function(){
+            if(req.readyState == XMLHttpRequest.DONE && req.status == 200) {
+                t = JSON.parse(req.response)
+
+                shortLink = document.getElementById('shortLink')
+                shortLink.innerHTML = '<h4 style="text-align: center;"><b>New Link</b></h4><input style="margin-left: 10px;" class="form-control" value="'+t.shortLink+'"/>';
+
+                loadMyLinks()
+            }else{
+                error(req.response)
+            }
+        }
+
+        longlink =  document.getElementById('longLink').value;
+        data = JSON.stringify({ "longLink": longlink });
+
+        req.send(data)
+    }
+
+    function auth(){
+        document.getElementById('error').hidden = 'true'
+
+        var req = new XMLHttpRequest();
+        req.open('POST', '/auth/signUp', false); 
+        req.setRequestHeader("Content-Type", "application/json");
+        req.withCredentials = false; 
+        req.onreadystatechange = function(){
+            if(req.readyState == XMLHttpRequest.DONE && req.status == 200) {
+                t = JSON.parse(req.response)
+                token = t.token
+                document.cookie = "token="+token
+                authToken = token
+
+                document.getElementById('sign').hidden = true;
+                document.getElementById('info').hidden = false;
+                document.getElementById('logout').hidden = false;
+            }else{
+                error(req.response)
+            }
+        }
+
+        login =  document.getElementById('login').value;
+        password =  document.getElementById('password').value;
+
+        data = JSON.stringify({ "login": login, "password": password });
+
+        req.send(data)
+    }
+
+    function signIn(){
+        document.getElementById('error').hidden = 'true'
+
+        var req = new XMLHttpRequest();
+        req.open('POST', '/auth/signIn', false); 
+        req.setRequestHeader("Content-Type", "application/json");
+        req.withCredentials = false; 
+        req.onreadystatechange = function(){
+            if(req.readyState == XMLHttpRequest.DONE && req.status == 200) {
+                t = JSON.parse(req.response)
+                token = t.token
+                document.cookie = "token="+token
+                authToken = token
+
+                document.getElementById('sign').hidden = true;
+                document.getElementById('info').hidden = false;
+                document.getElementById('logout').hidden = false;
+                loadMyLinks()
+            }else{
+                error(req.response)
+            }
+        }
+
+        login =  document.getElementById('login').value;
+        password =  document.getElementById('password').value;
+
+        data = JSON.stringify({ "login": login, "password": password });
+
+        req.send(data)
+    }
+
+    function getCookie(name) {
+        let matches = document.cookie.match(new RegExp(
+            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+        ));
+        return matches ? decodeURIComponent(matches[1]) : undefined;
+    }
+    
+ </script>
+</html>
+

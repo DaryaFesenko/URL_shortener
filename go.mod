@@ -8,5 +8,4 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.2
 	github.com/stretchr/testify v1.7.0
-	gopkg.in/yaml.v2 v2.4.0
 )
