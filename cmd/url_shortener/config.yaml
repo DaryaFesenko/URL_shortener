@@ -1,5 +1,0 @@
-postgres: "postgres://postgres:@localhost/shortener?sslmode=disable"
-hashSalt: "salt"
-signingKey: "sign_key"
-expireDuration: 604800s
-serverAddress: "localhost:9000"

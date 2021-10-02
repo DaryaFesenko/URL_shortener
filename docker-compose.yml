@@ -1,0 +1,40 @@
+version: "3.7"
+
+services: 
+  registry:
+    image: registry:2
+    ports:
+      - 5000:5000
+    restart: always
+    networks: 
+      - urlshortenernet
+
+  postgres:
+    image: postgres:12-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    environment: 
+      POSTGRES_PASSWORD: 1111
+      POSTGRES_DB: shortener
+    networks: 
+      - urlshortenernet
+  
+  urlshortener:
+    image: 127.0.0.1:5000/urlshortener:latest
+    restart: always
+    ports:
+      - 9000:9000
+    build: .
+    environment: 
+      PG_DSN: "postgres://postgres:1111@postgres/shortener?sslmode=disable"
+    depends_on: 
+      - registry
+      - postgres
+    networks: 
+      - urlshortenernet
+
+networks: 
+  urlshortenernet:
