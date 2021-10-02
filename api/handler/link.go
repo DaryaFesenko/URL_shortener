@@ -2,6 +2,8 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
+	"html/template"
 	"net"
 	"net/http"
 	"urlshortener/app/services/link"
@@ -18,19 +20,17 @@ type linkResponse struct {
 	ShortLink string `json:"shortLink"`
 }
 
-type longLinkResponse struct {
-	LongLink string `json:"longLink"`
-}
-
 type LinkRouter struct {
-	r    *Router
-	link *link.LinkService
+	r             *Router
+	link          *link.LinkService
+	serverAddress string
 }
 
-func NewLinkRouter(r *Router, link *link.LinkService) *LinkRouter {
+func NewLinkRouter(r *Router, link *link.LinkService, serverAddress string) *LinkRouter {
 	return &LinkRouter{
-		r:    r,
-		link: link,
+		r:             r,
+		link:          link,
+		serverAddress: serverAddress,
 	}
 }
 
@@ -40,10 +40,28 @@ func (l *LinkRouter) RegisterAPI() {
 
 		r.Post("/", l.addLink)
 		r.Delete("/", l.delLink)
-		r.Get("/", l.infoLink)
+
+		r.Get("/myLinks", l.getLinks)
 	})
 
-	l.r.Get("/", l.getLongLink)
+	l.r.Get("/link", l.infoLink)
+	l.r.Get("/shortlink/{shortLink}", l.getLongLink)
+}
+
+func (l *LinkRouter) getLinks(w http.ResponseWriter, r *http.Request) {
+	userID, err := l.r.GetUserAuth(r)
+	if err != nil {
+		http.Error(w, "can't get user from authorization", http.StatusUnauthorized)
+		return
+	}
+
+	links, err := l.link.GetLinks(*userID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("can't get links for user with id %s", userID), http.StatusInternalServerError)
+		return
+	}
+
+	_ = json.NewEncoder(w).Encode(links)
 }
 
 func (l *LinkRouter) addLink(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +85,7 @@ func (l *LinkRouter) addLink(w http.ResponseWriter, r *http.Request) {
 
 	_ = json.NewEncoder(w).Encode(
 		linkResponse{
-			ShortLink: shortLink,
+			ShortLink: l.serverAddress + "/shortlink/" + shortLink,
 		},
 	)
 }
@@ -99,7 +117,7 @@ func (l *LinkRouter) delLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func (l *LinkRouter) infoLink(w http.ResponseWriter, r *http.Request) {
-	userID, err := l.r.GetUserAuth(r)
+	userID, err := l.r.GetUserAuthFromCookie(r)
 	if err != nil {
 		http.Error(w, "can't get user from authorization", http.StatusUnauthorized)
 		return
@@ -123,11 +141,22 @@ func (l *LinkRouter) infoLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = json.NewEncoder(w).Encode(statistic)
+	tmpl, err := template.ParseFiles("../../front/statistic.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	statistic.ShortLink = l.serverAddress + "/shortlink/" + statistic.ShortLink
+
+	err = tmpl.Execute(w, statistic)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (l *LinkRouter) getLongLink(w http.ResponseWriter, r *http.Request) {
-	shortLink := r.URL.Query().Get("shortLink")
+	shortLink := chi.URLParam(r, "shortLink")
 	if shortLink == "" {
 		http.Error(w, "parameters 'shortLink' is empty", http.StatusBadRequest)
 	}
@@ -144,7 +173,5 @@ func (l *LinkRouter) getLongLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = json.NewEncoder(w).Encode(longLinkResponse{
-		LongLink: longLink,
-	})
+	http.Redirect(w, r, longLink, http.StatusTemporaryRedirect)
 }

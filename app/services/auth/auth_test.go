@@ -32,8 +32,8 @@ func (s *Store) Insert(user *auth.User) error {
 	return nil
 }
 
-func (s *Store) Get(userID uuid.UUID, password string) (*auth.User, error) {
-	if userID == s.user.ID {
+func (s *Store) Get(login, password string) (*auth.User, error) {
+	if login == s.user.Login {
 		return s.user, nil
 	}
 	return nil, fmt.Errorf("user not found")

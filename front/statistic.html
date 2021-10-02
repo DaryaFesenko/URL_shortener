@@ -1,0 +1,16 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Сокращатель ссылок</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+ </head>
+ <body>
+     <div class="d-grid gap-2 col-6 mx-auto" style="border-radius: 8px; background-color: #cbf7ea; margin-top: 50px;">
+        <h3><b>Long link:</b> {{ .LongLink}}</h3>
+        <h3><b>Short link:</b> {{ .ShortLink}}</h3>
+        <h3><b>Unique user count:</b> {{ .UniqueTransitCount}}</h3>
+        <h3><b>All transit count:</b> {{ .TransitCount}}</h3>
+     </div>
+ </body>
+</html>

@@ -3,6 +3,7 @@ package link
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 	"urlshortener/app/services/shortener"
 
@@ -10,21 +11,30 @@ import (
 )
 
 type LinkStatistic struct {
-	UniqueTransitCount int
-	TransitCount       int
+	UniqueTransitCount int    `json:"uniqueCount"`
+	TransitCount       int    `json:"allCount"`
+	LongLink           string `json:"longLink"`
+	ShortLink          string `json:"shortLink"`
 }
 
 type LinkService struct {
 	store               LinkStorer
-	serverAddress       string
 	linkTransitionStore LinkTransitStorer
 }
 
-func NewLinkService(store LinkStorer, linkTransitStore LinkTransitStorer, serverAddress string) *LinkService {
-	return &LinkService{store: store, serverAddress: serverAddress, linkTransitionStore: linkTransitStore}
+func NewLinkService(store LinkStorer, linkTransitStore LinkTransitStorer) *LinkService {
+	return &LinkService{store: store, linkTransitionStore: linkTransitStore}
+}
+
+func (l *LinkService) GetLinks(userID uuid.UUID) ([]Link, error) {
+	return l.store.GetLinks(userID)
 }
 
 func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, error) {
+	if !strings.Contains(longLink, "http") {
+		return "", fmt.Errorf("string is not link")
+	}
+
 	ok, err := l.store.ExistLongLink(userID, longLink)
 	if err != nil {
 		return "", err
@@ -39,7 +49,7 @@ func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, er
 		OwnerID:   *userID,
 		CreatedAt: time.Now(),
 		LongLink:  longLink,
-		ShortLink: l.createShortLink(),
+		ShortLink: shortener.Shorten(),
 	}
 
 	err = l.store.Insert(link)
@@ -105,11 +115,9 @@ func (l *LinkService) GetLinkStatistic(userID *uuid.UUID, linkID uuid.UUID) (Lin
 	return LinkStatistic{
 		UniqueTransitCount: len(linkTransitions),
 		TransitCount:       count,
+		LongLink:           link.LongLink,
+		ShortLink:          link.ShortLink,
 	}, nil
-}
-
-func (l *LinkService) createShortLink() string {
-	return l.serverAddress + "/" + shortener.Shorten()
 }
 
 func (l *LinkService) GetLongLink(shortLink string, userID string) (string, error) {

@@ -17,7 +17,7 @@ func NewConfig() (*Config, error) {
 	var conf Config
 
 	conf.Postgres = os.Getenv("PG_DSN")
-	conf.ServerAddress = ":9000"
+	conf.ServerAddress = "localhost:9000"
 	conf.HashSalt = "hashSalt"
 	conf.SigningKey = "signingKey"
 	conf.ExpireDuration = time.Hour * 24 * 7

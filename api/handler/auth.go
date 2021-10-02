@@ -33,7 +33,6 @@ func NewAuthRouter(r *Router, auth *auth.AuthService) *AuthRouter {
 func (a *AuthRouter) RegisterAPI() {
 	a.r.Route("/auth", func(r chi.Router) {
 		r.Post("/signIn", a.signIn)
-
 		r.Post("/signUp", a.signUp)
 	})
 }

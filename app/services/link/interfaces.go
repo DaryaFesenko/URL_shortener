@@ -9,6 +9,7 @@ type LinkStorer interface {
 	GetLongLink(shortLink string) (string, error)
 	GetLinkIDByShortLink(shortLink string) (*uuid.UUID, error)
 	DeleteLink(linkID uuid.UUID) error
+	GetLinks(ownerID uuid.UUID) ([]Link, error)
 }
 
 type LinkTransitStorer interface {

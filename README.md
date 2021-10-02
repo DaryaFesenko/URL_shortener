@@ -1,9 +1,8 @@
 # URL_shortener
 
-tmpPassword = 1234
 
 Добавить ссылку
-curl -X POST "localhost:9000/link" -d"{\"longLink\":\"https://yandex.ru/\"}" -H"Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MzI1MjE3NzUuNzQyMjI2LCJpYXQiOjE2MzE5MTY5NzUuNzQyMjI4LCJ1c2VySWQiOiJlNTQ3MGY1Yy00MDA5LTRmNzAtYmFhYy1kOWEyMmVjMWU4YjUifQ.jilBVPlbQBaPcNulEZ8N1C6MDZKMio_v3lhjWjLNQJA"
+POST запрос /link с параметрами  longLink и токеном авторизации
 
 Получить длинную ссылку по коротой
 curl -X GET "localhost:9000?shortLink=:9000/2zFBZ8olHz"
@@ -16,3 +15,13 @@ curl -X POST "localhost:9000/auth/signUp" -d"{\"login\":\"test1\", \"password\":
 
 Статистика о ссылке
 curl -X GET "localhost:9000/link?id=cb6f7891-b319-43f1-baa4-849d8d787e0b" -H"Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MzE4MzI1ODcuODA1NzA2LCJpYXQiOjE2MzEyMjc3ODcuODA1NzA4LCJ1c2VySWQiOiJiNDdhNGNlZS0yMTY5LTRlYTItODEwNi1kOTY5NTMwY2IyODkifQ.Kp8izWdP_hc8rxp-aqPKoMflCj7WT7HsJwpYlNT4N4s"
+
+Вход
+
+
+- докер файл
+- мейк файл
+- сваггер
+
+- ну и вылить на хероку
+

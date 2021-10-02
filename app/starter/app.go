@@ -61,9 +61,9 @@ func (a *App) InitServices(s *Storers) *handler.Router {
 	copy(sign_key, []byte(a.Config.SigningKey))
 
 	authService := auth.NewAuthorizer(a.storers.userStorer, a.Config.HashSalt, sign_key, a.Config.ExpireDuration)
-	linkService := link.NewLinkService(a.storers.linkStorer, a.storers.linkTransitStorer, a.Config.ServerAddress)
+	linkService := link.NewLinkService(a.storers.linkStorer, a.storers.linkTransitStorer)
 
-	return handler.NewRouter(authService, linkService, sign_key)
+	return handler.NewRouter(authService, linkService, sign_key, a.Config.ServerAddress)
 }
 
 func (a *App) Serve(addr string, h http.Handler) {

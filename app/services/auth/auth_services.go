@@ -11,7 +11,7 @@ import (
 
 type UserStorer interface {
 	Insert(user *User) error
-	Get(userID uuid.UUID, password string) (*User, error)
+	Get(login, password string) (*User, error)
 }
 
 type AuthService struct {
@@ -57,7 +57,7 @@ func (a *AuthService) SignIn(user *User) (string, error) {
 	pwd.Write([]byte(a.hashSalt))
 	user.Password = fmt.Sprintf("%x", pwd.Sum(nil))
 
-	user, err := a.userStore.Get(user.ID, user.Password)
+	user, err := a.userStore.Get(user.Login, user.Password)
 	if err != nil {
 		return "", err
 	}
