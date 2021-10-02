@@ -16,6 +16,6 @@ type LinkTransitStorer interface {
 	Insert(lt LinkTransition) error
 	UpdateTransitCount(id uuid.UUID, usedCount int) error
 	StatisticLink(linkID uuid.UUID) ([]LinkTransition, error)
-	GetTransit(usedUserID string, linkID uuid.UUID) (LinkTransition, error)
+	GetTransit(ip string, linkID uuid.UUID) (LinkTransition, error)
 	DeleteLinkTransit(linkID uuid.UUID) error
 }

@@ -35,15 +35,6 @@ func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, er
 		return "", fmt.Errorf("string is not link")
 	}
 
-	ok, err := l.store.ExistLongLink(userID, longLink)
-	if err != nil {
-		return "", err
-	}
-
-	if ok {
-		return "", fmt.Errorf("this link already exist")
-	}
-
 	link := &Link{
 		ID:        uuid.New(),
 		OwnerID:   *userID,
@@ -52,7 +43,7 @@ func (l *LinkService) CreateLink(userID *uuid.UUID, longLink string) (string, er
 		ShortLink: shortener.Shorten(),
 	}
 
-	err = l.store.Insert(link)
+	err := l.store.Insert(link)
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +111,7 @@ func (l *LinkService) GetLinkStatistic(userID *uuid.UUID, linkID uuid.UUID) (Lin
 	}, nil
 }
 
-func (l *LinkService) GetLongLink(shortLink string, userID string) (string, error) {
+func (l *LinkService) GetLongLink(shortLink string, ip string) (string, error) {
 	longLink, err := l.store.GetLongLink(shortLink)
 
 	if err != nil {
@@ -132,14 +123,15 @@ func (l *LinkService) GetLongLink(shortLink string, userID string) (string, erro
 		return "", err
 	}
 
-	linkTransit, err := l.linkTransitionStore.GetTransit(userID, *linkID)
+	linkTransit, err := l.linkTransitionStore.GetTransit(ip, *linkID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			errInsert := l.linkTransitionStore.Insert(LinkTransition{
-				ID:         uuid.New(),
-				LinkID:     *linkID,
-				UsedUserID: userID,
-				UsedCount:  1,
+				ID:        uuid.New(),
+				LinkID:    *linkID,
+				IP:        ip,
+				UsedCount: 1,
+				Date:      time.Now(),
 			})
 
 			if errInsert != nil {

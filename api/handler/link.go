@@ -165,9 +165,9 @@ func (l *LinkRouter) getLongLink(w http.ResponseWriter, r *http.Request) {
 	if forwarder == "" {
 		forwarder = r.RemoteAddr
 	}
-	usedUserID, _, _ := net.SplitHostPort(forwarder)
+	ip, _, _ := net.SplitHostPort(forwarder)
 
-	longLink, err := l.link.GetLongLink(shortLink, usedUserID)
+	longLink, err := l.link.GetLongLink(shortLink, ip)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

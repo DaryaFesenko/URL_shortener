@@ -6,7 +6,6 @@ import (
 	"time"
 	"urlshortener/app/services/auth"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -95,10 +94,9 @@ func TestSignInFAIL(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	u := &auth.User{
-		ID:       uuid.New(),
 		Login:    "test",
-		Password: "12345",
+		Password: "1235",
 	}
 	_, err = service.SignIn(u)
-	assert.Equal(t, err, fmt.Errorf("user not found"))
+	assert.Equal(t, nil, err)
 }

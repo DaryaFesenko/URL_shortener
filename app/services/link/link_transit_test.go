@@ -50,11 +50,11 @@ func (l *LinkTransitStore) StatisticLink(linkID uuid.UUID) ([]link.LinkTransitio
 	return statistic, nil
 }
 
-func (l *LinkTransitStore) GetTransit(usedUserID string, linkID uuid.UUID) (link.LinkTransition, error) {
+func (l *LinkTransitStore) GetTransit(ip string, linkID uuid.UUID) (link.LinkTransition, error) {
 	for i := range l.linkTransitions {
 		linkTransition := l.linkTransitions[i]
 
-		if linkTransition.LinkID == linkID && linkTransition.UsedUserID == usedUserID {
+		if linkTransition.LinkID == linkID && linkTransition.IP == ip {
 			return *linkTransition, nil
 		}
 	}

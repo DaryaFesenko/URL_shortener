@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	testLink1 = "http://testlink1"
+)
+
 var _ link.LinkStorer = &Store{}
 
 type Store struct {
@@ -92,28 +96,10 @@ func TestCreateLinkOK(t *testing.T) {
 	service := link.NewLinkService(&store, &linkTransitStore)
 
 	userId := uuid.New()
-	_, err := service.CreateLink(&userId, "testlink1")
+	_, err := service.CreateLink(&userId, testLink1)
 
 	assert.Equal(t, err, nil)
 	assert.Equal(t, len(store.links), 1)
-}
-
-func TestCreateLinkFAIL(t *testing.T) {
-	store := InitStore()
-	linkTransitStore := InitLinkTransitStore()
-	service := link.NewLinkService(&store, &linkTransitStore)
-
-	userId := uuid.New()
-	store.Insert(&link.Link{
-		ID:        uuid.New(),
-		CreatedAt: time.Now(),
-		ShortLink: "",
-		LongLink:  "testlink1",
-		OwnerID:   userId,
-	})
-
-	_, err := service.CreateLink(&userId, "testlink1")
-	assert.Equal(t, err, fmt.Errorf("this link already exist"))
 }
 
 func TestDeleteLinkOK(t *testing.T) {
@@ -127,29 +113,29 @@ func TestDeleteLinkOK(t *testing.T) {
 		ID:        linkId,
 		CreatedAt: time.Now(),
 		ShortLink: "",
-		LongLink:  "testlink1",
+		LongLink:  testLink1,
 		OwnerID:   userId,
 	})
 
 	linkTransitStore.Insert(link.LinkTransition{
-		ID:         uuid.New(),
-		LinkID:     linkId,
-		UsedUserID: "user1",
-		UsedCount:  2,
+		ID:        uuid.New(),
+		LinkID:    linkId,
+		IP:        "user1",
+		UsedCount: 2,
 	})
 
 	linkTransitStore.Insert(link.LinkTransition{
-		ID:         uuid.New(),
-		LinkID:     linkId,
-		UsedUserID: "user2",
-		UsedCount:  1,
+		ID:        uuid.New(),
+		LinkID:    linkId,
+		IP:        "user2",
+		UsedCount: 1,
 	})
 
 	linkTransitStore.Insert(link.LinkTransition{
-		ID:         uuid.New(),
-		LinkID:     uuid.New(),
-		UsedUserID: "user3",
-		UsedCount:  1,
+		ID:        uuid.New(),
+		LinkID:    uuid.New(),
+		IP:        "user3",
+		UsedCount: 1,
 	})
 
 	err := service.DeleteLink(userId, linkId)
@@ -184,22 +170,22 @@ func TestGetLinkStatisticOK(t *testing.T) {
 		ID:        linkId,
 		CreatedAt: time.Now(),
 		ShortLink: "",
-		LongLink:  "testlink1",
+		LongLink:  testLink1,
 		OwnerID:   userId,
 	})
 
 	linkTransitStore.Insert(link.LinkTransition{
-		ID:         uuid.New(),
-		LinkID:     linkId,
-		UsedUserID: "user1",
-		UsedCount:  2,
+		ID:        uuid.New(),
+		LinkID:    linkId,
+		IP:        "user1",
+		UsedCount: 2,
 	})
 
 	linkTransitStore.Insert(link.LinkTransition{
-		ID:         uuid.New(),
-		LinkID:     linkId,
-		UsedUserID: "user2",
-		UsedCount:  1,
+		ID:        uuid.New(),
+		LinkID:    linkId,
+		IP:        "user2",
+		UsedCount: 1,
 	})
 
 	stat, err := service.GetLinkStatistic(&userId, linkId)
@@ -232,15 +218,15 @@ func TestGetLinkStatisticFAIL2(t *testing.T) {
 		ID:        linkId,
 		CreatedAt: time.Now(),
 		ShortLink: "",
-		LongLink:  "testlink1",
+		LongLink:  testLink1,
 		OwnerID:   uuid.New(),
 	})
 
 	linkTransitStore.Insert(link.LinkTransition{
-		ID:         uuid.New(),
-		LinkID:     linkId,
-		UsedUserID: "user1",
-		UsedCount:  2,
+		ID:        uuid.New(),
+		LinkID:    linkId,
+		IP:        "user1",
+		UsedCount: 2,
 	})
 
 	_, err := service.GetLinkStatistic(&userId, linkId)
@@ -257,16 +243,16 @@ func TestGetLongLinkOK1(t *testing.T) {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		ShortLink: "shortLink1",
-		LongLink:  "testlink1",
+		LongLink:  testLink1,
 		OwnerID:   uuid.New(),
 	})
 
 	longLink, err := service.GetLongLink("shortLink1", userID)
 	assert.Equal(t, err, nil)
-	assert.Equal(t, longLink, "testlink1")
+	assert.Equal(t, longLink, testLink1)
 	assert.Equal(t, len(linkTransitStore.linkTransitions), 1)
 	assert.Equal(t, linkTransitStore.linkTransitions[0].UsedCount, 1)
-	assert.Equal(t, linkTransitStore.linkTransitions[0].UsedUserID, userID)
+	assert.Equal(t, linkTransitStore.linkTransitions[0].IP, userID)
 }
 
 func TestGetLongLinkOK2(t *testing.T) {
@@ -280,23 +266,23 @@ func TestGetLongLinkOK2(t *testing.T) {
 		ID:        linkID,
 		CreatedAt: time.Now(),
 		ShortLink: "shortLink1",
-		LongLink:  "testlink1",
+		LongLink:  testLink1,
 		OwnerID:   uuid.New(),
 	})
 
 	linkTransitStore.Insert(link.LinkTransition{
-		ID:         uuid.New(),
-		LinkID:     linkID,
-		UsedUserID: userID,
-		UsedCount:  2,
+		ID:        uuid.New(),
+		LinkID:    linkID,
+		IP:        userID,
+		UsedCount: 2,
 	})
 
 	longLink, err := service.GetLongLink("shortLink1", userID)
 	assert.Equal(t, err, nil)
-	assert.Equal(t, longLink, "testlink1")
+	assert.Equal(t, longLink, testLink1)
 	assert.Equal(t, len(linkTransitStore.linkTransitions), 1)
 	assert.Equal(t, linkTransitStore.linkTransitions[0].UsedCount, 3)
-	assert.Equal(t, linkTransitStore.linkTransitions[0].UsedUserID, userID)
+	assert.Equal(t, linkTransitStore.linkTransitions[0].IP, userID)
 }
 
 func TestGetLongLinkFAIL1(t *testing.T) {
@@ -309,7 +295,7 @@ func TestGetLongLinkFAIL1(t *testing.T) {
 		ID:        uuid.New(),
 		CreatedAt: time.Now(),
 		ShortLink: "shortLink1",
-		LongLink:  "testlink1",
+		LongLink:  testLink1,
 		OwnerID:   uuid.New(),
 	})
 

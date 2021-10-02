@@ -3,6 +3,7 @@ package pgsql
 import (
 	"database/sql"
 	"fmt"
+	"time"
 	"urlshortener/app/services/link"
 
 	"github.com/google/uuid"
@@ -19,9 +20,9 @@ func NewLinkTransitStorer(db *sql.DB) *LinkTransitionStore {
 }
 
 func (l *LinkTransitionStore) Insert(lt link.LinkTransition) error {
-	query := `INSERT INTO link_transitions (id, link_id, used_user_id, used_count) VALUES ($1, $2, $3, $4)`
+	query := `INSERT INTO link_transitions (id, link_id, ip, used_count, date) VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := l.db.Exec(query, lt.ID, lt.LinkID, lt.UsedUserID, lt.UsedCount)
+	_, err := l.db.Exec(query, lt.ID, lt.LinkID, lt.IP, lt.UsedCount, lt.Date)
 	if err != nil {
 		return fmt.Errorf("can't insert link transit: %v", err)
 	}
@@ -30,7 +31,7 @@ func (l *LinkTransitionStore) Insert(lt link.LinkTransition) error {
 }
 
 func (l *LinkTransitionStore) UpdateTransitCount(id uuid.UUID, usedCount int) error {
-	_, err := l.db.Exec(`UPDATE link_transitions SET used_count = $2 WHERE id = $1`, id, usedCount)
+	_, err := l.db.Exec(`UPDATE link_transitions SET used_count = $2, date = $3 WHERE id = $1`, id, usedCount, time.Now())
 	if err != nil {
 		return fmt.Errorf("can't update link transit: %v", err)
 	}
@@ -39,7 +40,7 @@ func (l *LinkTransitionStore) UpdateTransitCount(id uuid.UUID, usedCount int) er
 }
 
 func (l *LinkTransitionStore) StatisticLink(linkID uuid.UUID) ([]link.LinkTransition, error) {
-	linkTransitions, err := l.getTransitions(`SELECT id, link_id, used_user_id, used_count FROM link_transitions WHERE link_id = $1`, linkID)
+	linkTransitions, err := l.getTransitions(`SELECT id, link_id, ip, used_count, date FROM link_transitions WHERE link_id = $1`, linkID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +50,7 @@ func (l *LinkTransitionStore) StatisticLink(linkID uuid.UUID) ([]link.LinkTransi
 
 func (l *LinkTransitionStore) GetTransit(usedUserID string, linkID uuid.UUID) (link.LinkTransition, error) {
 	linkTransitions, err := l.getTransitions(
-		`SELECT id, link_id, used_user_id, used_count FROM link_transitions WHERE link_id = $1 AND used_user_id = $2`,
+		`SELECT id, link_id, ip, used_count, date FROM link_transitions WHERE link_id = $1 AND ip = $2`,
 		linkID, usedUserID)
 
 	if err != nil {
@@ -81,7 +82,7 @@ func (l *LinkTransitionStore) getTransitions(query string, params ...interface{}
 
 	for rows.Next() {
 		l := link.LinkTransition{}
-		err := rows.Scan(&l.ID, &l.LinkID, &l.UsedUserID, &l.UsedCount)
+		err := rows.Scan(&l.ID, &l.LinkID, &l.IP, &l.UsedCount)
 		if err != nil {
 			return nil, fmt.Errorf("can't scan link transit: %v", err)
 		}
