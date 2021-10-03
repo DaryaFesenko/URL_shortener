@@ -16,7 +16,7 @@ type Config struct {
 func NewConfig() (*Config, error) {
 	var conf Config
 
-	conf.Postgres = os.Getenv("PG_DSN")
+	conf.Postgres = os.Getenv("DATABASE_URL")
 	conf.ServerAddress = ":" + os.Getenv("PORT")
 	conf.HashSalt = "hashSalt"
 	conf.SigningKey = "signingKey"
