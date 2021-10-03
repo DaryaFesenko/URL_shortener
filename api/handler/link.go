@@ -41,9 +41,9 @@ func (l *LinkRouter) RegisterAPI() {
 		r.Post("/", l.addLink)
 		r.Delete("/", l.delLink)
 		r.Get("/myLinks", l.getLinks)
-		r.Get("/", l.infoLink)
 	})
 
+	l.r.Get("/", l.infoLink)
 	l.r.Get("/shortlink/{shortLink}", l.getLongLink)
 }
 
