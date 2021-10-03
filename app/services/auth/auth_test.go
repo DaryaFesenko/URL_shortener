@@ -50,12 +50,12 @@ func TestSignUpOK(t *testing.T) {
 	store := InitStore()
 	service := auth.NewAuthorizer(&store, "hashSalt", []byte("signingKey"), 1*time.Second)
 
-	store.user = &auth.User{
+	user := &auth.User{
 		Login:    "test",
 		Password: "12345",
 	}
 
-	_, err := service.SignUp(store.user)
+	_, err := service.SignUp(user)
 
 	assert.Equal(t, err, nil)
 }
@@ -69,10 +69,7 @@ func TestSignInOK(t *testing.T) {
 		Password: "12345",
 	}
 
-	_, err := service.SignUp(store.user)
-	assert.Equal(t, err, nil)
-
-	_, err = service.SignIn(store.user)
+	_, err := service.SignIn(store.user)
 	assert.Equal(t, err, nil)
 }
 
@@ -93,12 +90,12 @@ func TestSignInFAIL(t *testing.T) {
 	store := InitStore()
 	service := auth.NewAuthorizer(&store, "hashSalt", []byte("signingKey"), 1*time.Second)
 
-	store.user = &auth.User{
+	user := &auth.User{
 		Login:    "test",
 		Password: "12345",
 	}
 
-	_, err := service.SignUp(store.user)
+	_, err := service.SignUp(user)
 	assert.Equal(t, err, nil)
 
 	u := &auth.User{
