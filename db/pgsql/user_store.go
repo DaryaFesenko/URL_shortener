@@ -16,6 +16,30 @@ func NewUserStore(db *sql.DB) *UserStore {
 	return &UserStore{db: db}
 }
 
+func (u *UserStore) ExistUserByLogin(login string) (bool, error) {
+	users := make([]auth.User, 0)
+	query := `SELECT login FROM users WHERE login = $1`
+	rows, err := u.db.Query(query, login)
+	if err != nil {
+		return false, fmt.Errorf("can't select user: %v", err)
+	}
+
+	for rows.Next() {
+		u := auth.User{}
+		err := rows.Scan(&u.ID, &u.Login, &u.Password)
+		if err != nil {
+			return false, fmt.Errorf("can't scan user: %v", err)
+		}
+		users = append(users, u)
+	}
+
+	if len(users) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (u *UserStore) Get(login, password string) (*auth.User, error) {
 	users := make([]auth.User, 0)
 	query := `SELECT id, login, password FROM users WHERE login = $1 AND password = $2`

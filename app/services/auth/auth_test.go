@@ -38,6 +38,14 @@ func (s *Store) Get(login, password string) (*auth.User, error) {
 	return nil, fmt.Errorf("user not found")
 }
 
+func (s *Store) ExistUserByLogin(login string) (bool, error) {
+	if login == s.user.Login {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func TestSignUpOK(t *testing.T) {
 	store := InitStore()
 	service := auth.NewAuthorizer(&store, "hashSalt", []byte("signingKey"), 1*time.Second)

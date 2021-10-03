@@ -12,6 +12,7 @@ import (
 type UserStorer interface {
 	Insert(user *User) error
 	Get(login, password string) (*User, error)
+	ExistUserByLogin(login string) (bool, error)
 }
 
 type AuthService struct {
@@ -41,7 +42,16 @@ func (a *AuthService) SignUp(user *User) (string, error) {
 	pwd.Write([]byte(a.hashSalt))
 	user.Password = fmt.Sprintf("%x", pwd.Sum(nil))
 
-	err := a.userStore.Insert(user)
+	exist, err := a.userStore.ExistUserByLogin(user.Login)
+	if err != nil {
+		return "", err
+	}
+
+	if exist {
+		return "", fmt.Errorf("user with login %s already exist, choose another login", user.Login)
+	}
+
+	err = a.userStore.Insert(user)
 	if err != nil {
 		return "", err
 	}
