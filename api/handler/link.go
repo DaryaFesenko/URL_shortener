@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -169,8 +170,10 @@ func (l *LinkRouter) getLongLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	forwarder := r.Header.Get("X-FORWARDED-FOR")
+	log.Println(forwarder)
 	if forwarder == "" {
 		forwarder = r.RemoteAddr
+		log.Println(forwarder)
 	}
 	ip, _, _ := net.SplitHostPort(forwarder)
 
