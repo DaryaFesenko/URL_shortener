@@ -86,7 +86,7 @@ func (l *LinkRouter) addLink(w http.ResponseWriter, r *http.Request) {
 
 	_ = json.NewEncoder(w).Encode(
 		linkResponse{
-			ShortLink: l.serverAddress + "/shortlink/" + shortLink,
+			ShortLink: "https://url-shortener212.herokuapp.com/shortlink/" + shortLink,
 		},
 	)
 }
