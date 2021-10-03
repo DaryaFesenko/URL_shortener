@@ -154,7 +154,7 @@ func (l *LinkRouter) infoLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statistic.ShortLink = l.serverAddress + "/shortlink/" + statistic.ShortLink
+	statistic.ShortLink = "https://url-shortener212.herokuapp.com/shortlink/" + statistic.ShortLink
 
 	err = tmpl.Execute(w, statistic)
 	if err != nil {
