@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"urlshortener/app/services/link"
@@ -170,14 +169,13 @@ func (l *LinkRouter) getLongLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	forwarder := r.Header.Get("X-FORWARDED-FOR")
-	log.Println(forwarder)
+	log.Println(forwarder, "header")
 	if forwarder == "" {
 		forwarder = r.RemoteAddr
 		log.Println(forwarder)
 	}
-	ip, _, _ := net.SplitHostPort(forwarder)
 
-	longLink, err := l.link.GetLongLink(shortLink, ip)
+	longLink, err := l.link.GetLongLink(shortLink, forwarder)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
