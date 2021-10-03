@@ -73,6 +73,7 @@ func (l *LinkTransitionStore) DeleteLinkTransit(linkID uuid.UUID) error {
 	return nil
 }
 
+// nolint:dupl // it's NOT duplicate
 func (l *LinkTransitionStore) getTransitions(query string, params ...interface{}) ([]link.LinkTransition, error) {
 	lt := make([]link.LinkTransition, 0)
 	rows, err := l.db.Query(query, params...)

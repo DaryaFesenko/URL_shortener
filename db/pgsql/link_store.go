@@ -54,6 +54,7 @@ func (l *LinkStore) ExistLongLink(userID *uuid.UUID, longLink string) (bool, err
 	return false, nil
 }
 
+// nolint:dupl // it's NOT duplicate
 func (l *LinkStore) getLinks(query string, params ...interface{}) ([]link.Link, error) {
 	links := make([]link.Link, 0)
 	rows, err := l.db.Query(query, params...)
