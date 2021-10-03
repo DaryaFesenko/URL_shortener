@@ -82,7 +82,7 @@ func (l *LinkTransitionStore) getTransitions(query string, params ...interface{}
 
 	for rows.Next() {
 		l := link.LinkTransition{}
-		err := rows.Scan(&l.ID, &l.LinkID, &l.IP, &l.UsedCount)
+		err := rows.Scan(&l.ID, &l.LinkID, &l.IP, &l.UsedCount, &l.Date)
 		if err != nil {
 			return nil, fmt.Errorf("can't scan link transit: %v", err)
 		}
