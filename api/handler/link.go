@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"urlshortener/app/services/link"
@@ -169,11 +168,6 @@ func (l *LinkRouter) getLongLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	forwarder := r.Header.Get("X-FORWARDED-FOR")
-	log.Println(forwarder, "header")
-	if forwarder == "" {
-		forwarder = r.RemoteAddr
-		log.Println(forwarder)
-	}
 
 	longLink, err := l.link.GetLongLink(shortLink, forwarder)
 	if err != nil {
