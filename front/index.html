@@ -6,7 +6,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
  </head>
  <body>
-    <div id ="error" hidden="true" class="d-grid gap-2 col-6 mx-auto" style="background-color: #f7cbcb; color: red; text-align: center; border-radius: 8px"></div>
+    <div id ="error" class="d-grid gap-2 col-6 mx-auto" style="background-color: #f7cbcb; color: red; text-align: center; border-radius: 8px"></div>
 
     <div style="text-align: right; margin: 20px;" id="logout" hidden="true"> 
         <button type="button" class="btn btn-dark" onclick="logout()">Logout</button>
@@ -67,8 +67,7 @@
     }
 
     function delLink(idLink){
-        document.getElementById('error').hidden = 'true'
-
+        emptyError()
         var req = new XMLHttpRequest();
         req.open('DELETE', '/link?linkID='+idLink, false); 
         req.setRequestHeader("Content-Type", "application/json");
@@ -83,12 +82,16 @@
 
     function error(msg){
         err = document.getElementById('error')
-        err.hidden = false
         err.innerHTML = "<p>ERROR: "+msg+"</p>"
     }
 
+    function emptyError(){
+        err = document.getElementById('error')
+        err.innerHTML = ""
+    }
+
     function logout(){
-        document.getElementById('error').hidden = 'true'
+        emptyError()
 
         var cookies = document.cookie.split(";");
         for (var i = 0; i < cookies.length; i++) {
@@ -152,7 +155,7 @@
     }
 
     function addLink(){
-        document.getElementById('error').hidden = 'true'
+        emptyError()
 
         var req = new XMLHttpRequest();
         req.open('POST', '/link', false); 
@@ -179,7 +182,7 @@
     }
 
     function auth(){
-        document.getElementById('error').hidden = 'true'
+        emptyError()
 
         var req = new XMLHttpRequest();
         req.open('POST', '/auth/signUp', false); 
@@ -209,7 +212,7 @@
     }
 
     function signIn(){
-        document.getElementById('error').hidden = 'true'
+        emptyError()
 
         var req = new XMLHttpRequest();
         req.open('POST', '/auth/signIn', false); 
